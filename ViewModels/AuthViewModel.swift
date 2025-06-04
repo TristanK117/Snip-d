@@ -7,20 +7,15 @@
 
 import Foundation
 import FirebaseAuth
-import Combine
 
 @MainActor
 class AuthViewModel: ObservableObject {
-    @Published var isAuthenticated: Bool = false
+    @Published var isAuthenticated = false
     @Published var errorMessage: String?
 
     func login(email: String, password: String) async {
         do {
-            let _ = try await withCheckedThrowingContinuation { continuation in
-                AuthService.shared.signIn(email: email, password: password) { result in
-                    continuation.resume(with: result)
-                }
-            }
+            let _ = try await Auth.auth().signIn(withEmail: email, password: password)
             isAuthenticated = true
         } catch {
             errorMessage = error.localizedDescription
@@ -29,11 +24,7 @@ class AuthViewModel: ObservableObject {
 
     func register(email: String, password: String) async {
         do {
-            let _ = try await withCheckedThrowingContinuation { continuation in
-                AuthService.shared.signUp(email: email, password: password) { result in
-                    continuation.resume(with: result)
-                }
-            }
+            let _ = try await Auth.auth().createUser(withEmail: email, password: password)
             isAuthenticated = true
         } catch {
             errorMessage = error.localizedDescription
@@ -42,7 +33,7 @@ class AuthViewModel: ObservableObject {
 
     func logout() {
         do {
-            try AuthService.shared.signOut()
+            try Auth.auth().signOut()
             isAuthenticated = false
         } catch {
             errorMessage = error.localizedDescription

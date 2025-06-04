@@ -6,27 +6,18 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct PostPreviewView: View {
     let image: UIImage
 
+    @StateObject private var viewModel = PostPreviewViewModel()
     @State private var selectedGroup: Group?
     @State private var taggedFriends: [User] = []
-    @State private var showConfirmation = false
-
-    // Mock data
-    let mockGroups = [
-        Group(name: "UW Friends"),
-        Group(name: "Dorm 2B"),
-        Group(name: "Gym Buddies")
-    ]
-
-    let mockFriends = [
-        User(name: "Tristan"),
-        User(name: "Jamie"),
-        User(name: "Lee"),
-        User(name: "Nina")
-    ]
+    @State private var groups: [Group] = []
+    @State private var friends: [User] = []
+    @State private var isPosting = false
+    @State private var showAlert = false
 
     var body: some View {
         ScrollView {
@@ -38,17 +29,21 @@ struct PostPreviewView: View {
 
                 // Group Picker
                 Picker("Select Group", selection: $selectedGroup) {
-                    ForEach(mockGroups) { group in
+                    ForEach(groups, id: \.self) { group in
                         Text(group.name).tag(Optional(group))
                     }
                 }
                 .pickerStyle(.menu)
+                .onChange(of: selectedGroup) { newGroup in
+                    loadUsersForSelectedGroup()
+                }
 
-                // Tag Friends (Multi-Select)
+                // Friend Tagging
                 VStack(alignment: .leading) {
-                    Text("Tag Friends:")
+                    Text("Tag Friends")
                         .font(.headline)
-                    ForEach(mockFriends) { friend in
+
+                    ForEach(friends, id: \.self) { friend in
                         HStack {
                             Text(friend.name)
                             Spacer()
@@ -57,30 +52,66 @@ struct PostPreviewView: View {
                                     toggleFriend(friend)
                                 }
                         }
-                        .padding(.horizontal)
+                        .padding(.vertical, 4)
                     }
                 }
 
-                Button("Post Snipe") {
-                    // Post confirmation for now
-                    showConfirmation = true
+                // Upload Button
+                Button(isPosting ? "Posting..." : "Post Snipe") {
+                    guard let group = selectedGroup else { return }
+                    isPosting = true
+                    Task {
+                        await viewModel.uploadSnipe(image: image, group: group, tagged: taggedFriends)
+                        isPosting = false
+                        showAlert = true
+                    }
                 }
+                .disabled(isPosting || selectedGroup == nil)
                 .buttonStyle(.borderedProminent)
-                .padding(.top)
             }
             .padding()
         }
         .navigationTitle("Preview")
-        .alert("Snipe Posted!", isPresented: $showConfirmation) {
-            Button("OK", role: .cancel) { }
+        .alert("Post Status", isPresented: $showAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.uploadStatus ?? "Posted successfully.")
+        }
+        .onAppear {
+            loadGroupsForCurrentUser()
         }
     }
 
+    // MARK: - Helpers
+
     func toggleFriend(_ friend: User) {
-        if let index = taggedFriends.firstIndex(of: friend) {
-            taggedFriends.remove(at: index)
+        if taggedFriends.contains(friend) {
+            taggedFriends.removeAll { $0 == friend }
         } else {
             taggedFriends.append(friend)
+        }
+    }
+
+    func loadGroupsForCurrentUser() {
+        GroupService.shared.fetchGroupsForCurrentUser { result in
+            switch result {
+            case .success(let loadedGroups):
+                self.groups = loadedGroups
+            case .failure(let error):
+                print("Failed to load groups: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func loadUsersForSelectedGroup() {
+        guard let group = selectedGroup else { return }
+        UserService.shared.fetchUsersInGroup(group: group) { result in
+            switch result {
+            case .success(let loadedUsers):
+                self.friends = loadedUsers.filter { $0.email != Auth.auth().currentUser?.email }
+            case .failure(let error):
+                print("Failed to load users: \(error.localizedDescription)")
+            }
         }
     }
 }

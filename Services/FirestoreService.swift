@@ -5,7 +5,6 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-import Foundation
 import FirebaseFirestore
 import FirebaseFirestoreSwift
 
@@ -22,11 +21,12 @@ final class FirestoreService {
                 if let error = error {
                     completion(.failure(error))
                 } else {
-                    let snipes = snapshot?.documents.compactMap { doc in
-                        try? doc.data(as: Snipe.self)
+                    let snipes = snapshot?.documents.compactMap {
+                        try? $0.data(as: Snipe.self)
                     } ?? []
                     completion(.success(snipes))
                 }
             }
     }
 }
+

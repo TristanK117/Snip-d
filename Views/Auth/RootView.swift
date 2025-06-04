@@ -13,7 +13,7 @@ struct RootView: View {
     var body: some View {
         NavigationView {
             if authViewModel.isAuthenticated {
-                HomeFeedView()
+                MainTabView(authViewModel: authViewModel)
             } else {
                 LoginView()
                     .environmentObject(authViewModel)

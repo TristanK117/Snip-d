@@ -15,4 +15,7 @@ struct Snipe: Identifiable, Codable {
     var postedBy: String
     var groupName: String
     var timestamp: Date
+    var taggedUsers: [String]  // emails or user IDs
 }
+
+

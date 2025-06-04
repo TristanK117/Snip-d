@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreSwift
 
 @MainActor
 class FeedViewModel: ObservableObject {
@@ -13,15 +15,20 @@ class FeedViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     func loadSnipes() {
-        FirestoreService.shared.fetchSnipes { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let snipes):
-                    self.snipes = snipes
-                case .failure(let error):
-                    self.errorMessage = error.localizedDescription
+        Firestore.firestore().collection("snipes")
+            .order(by: "timestamp", descending: true)
+            .getDocuments { snapshot, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self.errorMessage = error.localizedDescription
+                        return
+                    }
+
+                    self.snipes = snapshot?.documents.compactMap {
+                        try? $0.data(as: Snipe.self)
+                    } ?? []
                 }
             }
-        }
     }
 }
+
