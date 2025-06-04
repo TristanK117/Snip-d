@@ -24,9 +24,7 @@ struct Snip_dApp: App {
 
   var body: some Scene {
     WindowGroup {
-      NavigationView {
-        ContentView()
-      }
+        RootView()
     }
   }
 }
