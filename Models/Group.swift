@@ -8,10 +8,14 @@
 import Foundation
 import FirebaseFirestore
 
-struct SnipGroup: Identifiable, Codable, Hashable {
-    @DocumentID var id: String?
-    var name: String
-    var members: [String] // list of emails
-    var createdBy: String
-    var timestamp: Date
+struct SnipGroup: Codable, Equatable {
+    let id: String
+    let name: String
+    let members: [String]
+    let createdBy: String
+    let timestamp: Timestamp
+    
+    var createdDate: Date {
+        return timestamp.dateValue()
+    }
 }

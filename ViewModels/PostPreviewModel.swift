@@ -19,12 +19,13 @@ class PostPreviewViewModel: ObservableObject {
     func uploadSnipe(image: UIImage, group: SnipGroup, tagged: [SnipUser]) async {
         guard let imageData = image.jpegData(compressionQuality: 0.8),
               let currentUser = Auth.auth().currentUser,
-              let email = currentUser.email,
-              let groupId = group.id else {
-            uploadStatus = "Invalid image, user, or group info."
+              let email = currentUser.email else {
+            uploadStatus = "Invalid image or user info."
             return
         }
 
+        // Use group.id directly since it's not optional
+        let groupId = group.id
         let snipeId = UUID().uuidString
         let storageRef = Storage.storage().reference().child("snipes/\(snipeId).jpg")
 

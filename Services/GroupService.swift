@@ -5,7 +5,6 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
@@ -46,14 +45,9 @@ struct GroupService {
     static func fetchGroups(for email: String) async throws -> [SnipGroup] {
         let snapshot = try await groupsCollection.whereField("members", arrayContains: email).getDocuments()
 
-        return snapshot.documents.compactMap { doc in
-            do {
-                let data = try JSONSerialization.data(withJSONObject: doc.data())
-                return try JSONDecoder().decode(SnipGroup.self, from: data)
-            } catch {
-                print("Failed to decode group: \(error)")
-                return nil
-            }
+        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+        return try snapshot.documents.compactMap { doc in
+            try doc.data(as: SnipGroup.self)
         }
     }
 
@@ -68,11 +62,8 @@ struct GroupService {
     // Fetch a single group
     static func fetchGroup(byId id: String) async throws -> SnipGroup {
         let doc = try await groupsCollection.document(id).getDocument()
-        guard let data = doc.data() else {
-            throw NSError(domain: "GroupService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Group not found"])
-        }
-
-        let json = try JSONSerialization.data(withJSONObject: data)
-        return try JSONDecoder().decode(SnipGroup.self, from: json)
+        
+        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+        return try doc.data(as: SnipGroup.self)
     }
 }

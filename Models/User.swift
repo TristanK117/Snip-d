@@ -7,7 +7,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct SnipUser: Identifiable, Codable, Hashable {
+struct SnipUser: Identifiable, Codable, Hashable, Equatable {
     @DocumentID var id: String?
     var uid: String
     var name: String

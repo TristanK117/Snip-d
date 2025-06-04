@@ -27,8 +27,8 @@ class FeedViewModel: ObservableObject {
             var allSnipes: [Snipe] = []
 
             for group in groups {
-                guard let id = group.id else { continue }
-                let groupSnipes = try await SnipeService.fetchSnipes(forGroup: id)
+                // Remove the guard let since id is not optional
+                let groupSnipes = try await SnipeService.fetchSnipes(forGroup: group.id)
                 allSnipes.append(contentsOf: groupSnipes)
             }
 

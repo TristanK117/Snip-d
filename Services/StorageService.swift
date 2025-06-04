@@ -17,7 +17,7 @@ struct StorageService {
             throw NSError(domain: "StorageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to compress image"])
         }
 
-        let imageRef = storageRef.child("snipes/\(path).jpg")
+        let imageRef = storageRef.child("images/\(path).jpg")
         let _ = try await imageRef.putDataAsync(imageData, metadata: nil)
         let url = try await imageRef.downloadURL()
         return url.absoluteString

@@ -36,14 +36,9 @@ struct SnipeService {
             .order(by: "timestamp", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc in
-            do {
-                let data = try JSONSerialization.data(withJSONObject: doc.data())
-                return try JSONDecoder().decode(Snipe.self, from: data)
-            } catch {
-                print("Failed to decode snipe: \(error)")
-                return nil
-            }
+        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+        return try snapshot.documents.compactMap { doc in
+            try doc.data(as: Snipe.self)
         }
     }
 
@@ -54,15 +49,9 @@ struct SnipeService {
             .order(by: "timestamp", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc in
-            do {
-                let data = try JSONSerialization.data(withJSONObject: doc.data())
-                return try JSONDecoder().decode(Snipe.self, from: data)
-            } catch {
-                print("Failed to decode snipe: \(error)")
-                return nil
-            }
+        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+        return try snapshot.documents.compactMap { doc in
+            try doc.data(as: Snipe.self)
         }
     }
 }
-

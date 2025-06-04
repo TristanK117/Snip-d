@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import FirebaseAuth
 
 @MainActor
 class CameraViewModel: ObservableObject {
@@ -32,5 +33,10 @@ class CameraViewModel: ObservableObject {
         selectedImage = nil
         photoPickerItem = nil
         isShowingPostPreview = false
+    }
+    
+
+    func getCurrentUserEmail() -> String? {
+        return Auth.auth().currentUser?.email
     }
 }

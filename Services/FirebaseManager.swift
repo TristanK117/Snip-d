@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Foundation
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
@@ -20,7 +19,7 @@ class FirebaseManager {
     let storage: Storage
 
     private init() {
-        FirebaseApp.configure()  // Optional if already configured in AppDelegate
+        // REMOVED: FirebaseApp.configure() - already configured in AppDelegate
         self.auth = Auth.auth()
         self.firestore = Firestore.firestore()
         self.storage = Storage.storage()
