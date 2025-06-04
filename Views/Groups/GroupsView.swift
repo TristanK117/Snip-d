@@ -8,45 +8,46 @@
 import SwiftUI
 
 struct GroupsView: View {
-    @State private var selectedGroup: Group?
-    @State private var groups: [Group] = [
-        Group(name: "UW Friends"),
-        Group(name: "Dorm 2B"),
-        Group(name: "Gym Buddies")
-    ]
-
-    @State private var newGroupName = ""
-    @State private var showCreateGroup = false
+    @StateObject private var viewModel = GroupsViewModel()
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                List(selection: $selectedGroup) {
-                    ForEach(groups) { group in
-                        HStack {
+            VStack {
+                if viewModel.isLoading {
+                    ProgressView("Loading Groups...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .padding()
+                } else if viewModel.groups.isEmpty {
+                    Text("No groups yet. Create or join one!")
+                        .foregroundColor(.gray)
+                        .padding()
+                } else {
+                    List(viewModel.groups, id: \.id) { group in
+                        NavigationLink(destination: GroupFeedView(group: group)) {
                             Text(group.name)
-                            Spacer()
-                            if selectedGroup == group {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .contentShape(Rectangle()) // Makes whole row tappable
-                        .onTapGesture {
-                            selectedGroup = group
+                                .font(.headline)
                         }
                     }
+                    .listStyle(PlainListStyle())
                 }
-
-                Button("Create New Group") {
-                    showCreateGroup = true
-                }
-                .buttonStyle(.borderedProminent)
-                .padding()
             }
-            .navigationTitle("Your Groups")
-            .sheet(isPresented: $showCreateGroup) {
-                CreateGroupView(groups: $groups)
+            .navigationTitle("Groups")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        viewModel.showingGroupCreation = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $viewModel.showingGroupCreation) {
+                CreateGroupView()
+            }
+            .onAppear {
+                Task {
+                    await viewModel.fetchGroups()
+                }
             }
         }
     }

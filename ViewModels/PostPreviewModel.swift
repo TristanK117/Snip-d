@@ -14,7 +14,7 @@ import UIKit
 class PostPreviewViewModel: ObservableObject {
     @Published var uploadStatus: String?
 
-    func uploadSnipe(image: UIImage, group: Group, tagged: [User]) async {
+    func uploadSnipe(image: UIImage, group: SnipGroup, tagged: [SnipUser]) async {
         guard let email = Auth.auth().currentUser?.email else {
             uploadStatus = "User not authenticated"
             return

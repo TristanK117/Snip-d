@@ -6,40 +6,28 @@
 //
 
 import Foundation
-import FirebaseAuth
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 @MainActor
 class GroupsViewModel: ObservableObject {
-    @Published var groups: [Group] = []
-    @Published var selectedGroup: Group?
+    @Published var groups: [SnipGroup] = []
+    @Published var isLoading = false
+    @Published var showingGroupCreation = false
 
-    func fetchGroups() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        Firestore.firestore().collection("groups")
-            .whereField("memberIds", arrayContains: uid)
-            .getDocuments { snapshot, error in
-                DispatchQueue.main.async {
-                    if let snapshot = snapshot {
-                        self.groups = snapshot.documents.compactMap {
-                            try? $0.data(as: Group.self)
-                        }
-                    }
-                }
-            }
-    }
-
-    func createGroup(name: String) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        let group = Group(id: nil, name: name, memberIds: [uid])
+    func fetchGroups() async {
+        isLoading = true
+        defer { isLoading = false }
 
         do {
-            _ = try Firestore.firestore().collection("groups").addDocument(from: group)
+            let snapshot = try await Firestore.firestore()
+                .collection("groups")
+                .getDocuments()
+
+            self.groups = try snapshot.documents.map {
+                try $0.data(as: SnipGroup.self)
+            }
         } catch {
-            print("Error creating group: \(error)")
+            print("Error fetching groups: \(error)")
         }
     }
 }

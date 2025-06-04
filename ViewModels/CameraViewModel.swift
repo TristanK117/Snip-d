@@ -5,8 +5,7 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-import Foundation
-import UIKit
+import SwiftUI
 import PhotosUI
 
 @MainActor

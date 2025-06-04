@@ -7,7 +7,6 @@
 
 import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 final class UserService {
     static let shared = UserService()
@@ -15,7 +14,7 @@ final class UserService {
 
     private init() {}
 
-    func fetchUsersInGroup(group: Group, completion: @escaping (Result<[User], Error>) -> Void) {
+    func fetchUsersInGroup(group: SnipGroup, completion: @escaping (Result<[SnipUser], Error>) -> Void) {
         guard !group.memberIds.isEmpty else {
             completion(.success([]))
             return
@@ -28,7 +27,7 @@ final class UserService {
                     completion(.failure(error))
                 } else {
                     let users = snapshot?.documents.compactMap {
-                        try? $0.data(as: User.self)
+                        try? $0.data(as: SnipUser.self)
                     } ?? []
                     completion(.success(users))
                 }

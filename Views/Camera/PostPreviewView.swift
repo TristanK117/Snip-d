@@ -12,10 +12,10 @@ struct PostPreviewView: View {
     let image: UIImage
 
     @StateObject private var viewModel = PostPreviewViewModel()
-    @State private var selectedGroup: Group?
-    @State private var taggedFriends: [User] = []
-    @State private var groups: [Group] = []
-    @State private var friends: [User] = []
+    @State private var selectedGroup: SnipGroup?
+    @State private var taggedFriends: [SnipUser] = []
+    @State private var groups: [SnipGroup] = []
+    @State private var friends: [SnipUser] = []
     @State private var isPosting = false
     @State private var showAlert = false
 
@@ -84,7 +84,7 @@ struct PostPreviewView: View {
 
     // MARK: - Helpers
 
-    func toggleFriend(_ friend: User) {
+    func toggleFriend(_ friend: SnipUser) {
         if taggedFriends.contains(friend) {
             taggedFriends.removeAll { $0 == friend }
         } else {

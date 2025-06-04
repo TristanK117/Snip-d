@@ -8,7 +8,6 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 @MainActor
 class NotificationsViewModel: ObservableObject {

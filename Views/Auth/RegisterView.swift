@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
 struct RegisterView: View {
     @EnvironmentObject var authViewModel: AuthViewModel

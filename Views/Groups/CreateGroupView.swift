@@ -6,63 +6,62 @@
 //
 
 import SwiftUI
-import FirebaseAuth
 import FirebaseFirestore
+import FirebaseAuth
 
 struct CreateGroupView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @State private var groupName = ""
     @State private var errorMessage: String?
-    @State private var isCreating = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Create a Group")
-                .font(.title2)
-                .bold()
+        NavigationView {
+            Form {
+                Section(header: Text("Group Name")) {
+                    TextField("Enter group name", text: $groupName)
+                }
 
-            TextField("Group Name", text: $groupName)
-                .textFieldStyle(.roundedBorder)
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                }
 
-            if let error = errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            Button(isCreating ? "Creating..." : "Create Group") {
-                Task {
-                    isCreating = true
-                    await createGroup()
-                    isCreating = false
+                Button("Create Group") {
+                    Task {
+                        await createGroup()
+                    }
                 }
             }
-            .disabled(!Validators.isValidGroupName(groupName))
-            .buttonStyle(.borderedProminent)
-
-            Spacer()
+            .navigationTitle("New Group")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
-        .padding()
     }
 
     private func createGroup() async {
-        guard Validators.isValidGroupName(groupName) else {
-            errorMessage = "Group name must be non-empty and under \(Constants.maxGroupNameLength) characters."
+        guard !groupName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            errorMessage = "Group name cannot be empty."
             return
         }
 
         guard let uid = Auth.auth().currentUser?.uid else {
-            errorMessage = "User not authenticated."
+            errorMessage = "User not signed in."
             return
         }
 
-        let group = Group(id: nil, name: groupName.trimmed, memberIds: [uid])
+        let groupData: [String: Any] = [
+            "name": groupName,
+            "memberIds": [uid]
+        ]
 
         do {
-            try await FirebaseManager.shared.firestore
-                .collection(Constants.groupsCollection)
-                .addDocument(from: group)
-            presentationMode.wrappedValue.dismiss()
+            try await Firestore.firestore().collection("groups").addDocument(data: groupData)
+            dismiss()
         } catch {
             errorMessage = "Failed to create group: \(error.localizedDescription)"
         }

@@ -6,8 +6,8 @@
 //  PHoto post
 //  PhotoURL, tagged users, timestamp
 
-import Foundation
-import FirebaseFirestoreSwift
+import FirebaseFirestore
+
 
 struct Snipe: Identifiable, Codable {
     @DocumentID var id: String?
@@ -15,7 +15,8 @@ struct Snipe: Identifiable, Codable {
     var postedBy: String
     var groupName: String
     var timestamp: Date
-    var taggedUsers: [String]  // emails or user IDs
+    var taggedUsers: [String]
 }
+
 
 

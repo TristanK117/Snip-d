@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		267F55882DF0C84100EAF612 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 267F55872DF0C84100EAF612 /* FirebaseFirestoreCombine-Community */; };
 		26C5244D2DF0065C009FA746 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 26C5244C2DF0065C009FA746 /* FirebaseAnalytics */; };
 		26C5244F2DF0065C009FA746 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 26C5244E2DF0065C009FA746 /* FirebaseAuth */; };
 		26C524512DF0065C009FA746 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 26C524502DF0065C009FA746 /* FirebaseFirestore */; };
@@ -92,6 +93,7 @@
 				26C5244D2DF0065C009FA746 /* FirebaseAnalytics in Frameworks */,
 				26C524532DF0065C009FA746 /* FirebaseStorage in Frameworks */,
 				26C5244F2DF0065C009FA746 /* FirebaseAuth in Frameworks */,
+				267F55882DF0C84100EAF612 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				26C524512DF0065C009FA746 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -169,6 +171,7 @@
 				26C5244E2DF0065C009FA746 /* FirebaseAuth */,
 				26C524502DF0065C009FA746 /* FirebaseFirestore */,
 				26C524522DF0065C009FA746 /* FirebaseStorage */,
+				267F55872DF0C84100EAF612 /* FirebaseFirestoreCombine-Community */,
 			);
 			productName = "Snip-d";
 			productReference = 26C523592DEFFE58009FA746 /* Snip-d.app */;
@@ -623,6 +626,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		267F55872DF0C84100EAF612 /* FirebaseFirestoreCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26C5244B2DF0065C009FA746 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFirestoreCombine-Community";
+		};
 		26C5244C2DF0065C009FA746 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 26C5244B2DF0065C009FA746 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

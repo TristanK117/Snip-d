@@ -7,28 +7,36 @@
 
 import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 @MainActor
 class FeedViewModel: ObservableObject {
     @Published var snipes: [Snipe] = []
-    @Published var errorMessage: String?
 
     func loadSnipes() {
         Firestore.firestore().collection("snipes")
             .order(by: "timestamp", descending: true)
             .getDocuments { snapshot, error in
-                DispatchQueue.main.async {
-                    if let error = error {
-                        self.errorMessage = error.localizedDescription
-                        return
-                    }
+                guard let documents = snapshot?.documents, error == nil else {
+                    print("Error loading snipes: \(error?.localizedDescription ?? "unknown")")
+                    return
+                }
 
-                    self.snipes = snapshot?.documents.compactMap {
-                        try? $0.data(as: Snipe.self)
-                    } ?? []
+                var results: [Snipe] = []
+
+                for document in documents {
+                    do {
+                        let snipe = try document.data(as: Snipe.self)
+                        results.append(snipe)
+                    } catch {
+                        print("Error decoding snipe: \(error)")
+                    }
+                }
+
+                DispatchQueue.main.async {
+                    self.snipes = results
                 }
             }
     }
 }
+
 

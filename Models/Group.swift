@@ -6,10 +6,10 @@
 //  id, name, members
 
 import Foundation
-import FirebaseFirestoreSwift
+import FirebaseFirestore
 
-struct Group: Identifiable, Codable, Hashable {
+struct SnipGroup: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var name: String
-    var memberIds: [String]  // Array of user UIDs
+    var memberIds: [String]
 }

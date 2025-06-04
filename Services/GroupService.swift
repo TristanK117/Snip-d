@@ -8,7 +8,6 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 final class GroupService {
     static let shared = GroupService()
@@ -16,7 +15,7 @@ final class GroupService {
 
     private init() {}
 
-    func fetchGroupsForCurrentUser(completion: @escaping (Result<[Group], Error>) -> Void) {
+    func fetchGroupsForCurrentUser(completion: @escaping (Result<[SnipGroup], Error>) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in."])))
             return
@@ -26,10 +25,10 @@ final class GroupService {
             .whereField("memberIds", arrayContains: uid)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    completion(.failure(error))
+                    completion(.failure(error)) 
                 } else {
                     let groups = snapshot?.documents.compactMap {
-                        try? $0.data(as: Group.self)
+                        try? $0.data(as: SnipGroup.self)
                     } ?? []
                     completion(.success(groups))
                 }
