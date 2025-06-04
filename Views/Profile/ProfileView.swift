@@ -9,37 +9,28 @@ import SwiftUI
 import FirebaseAuth
 
 struct ProfileView: View {
-    @ObservedObject var viewModel: AuthViewModel
-
-    // Mock snipes user is tagged in
-    let mockSnipes = [
-        Snipe(photoURL: "snipe1.jpg", postedBy: "Jamie", groupName: "Dorm 2B", timestamp: Date().addingTimeInterval(-3600)),
-        Snipe(photoURL: "snipe2.jpg", postedBy: "Nina", groupName: "UW Friends", timestamp: Date().addingTimeInterval(-7200))
-    ]
+    @StateObject private var viewModel = ProfileViewModel()
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 16) {
-                if let user = Auth.auth().currentUser {
-                    VStack {
-                        Text("📧 \(user.email ?? "Unknown")")
-                            .font(.title3)
-                        Text("You've been sniped in \(mockSnipes.count) posts")
-                            .foregroundColor(.gray)
-                    }
+            VStack(spacing: 12) {
+                if let email = viewModel.userEmail {
+                    Text("📧 \(email)")
+                        .font(.title3)
                 }
 
-                List(mockSnipes) { snipe in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("📸 Posted by \(snipe.postedBy)")
+                List(viewModel.taggedSnipes) { snipe in
+                    VStack(alignment: .leading) {
+                        Text("📸 \(snipe.postedBy)")
                             .font(.headline)
                         Text("Group: \(snipe.groupName)")
                             .font(.subheadline)
+                            .foregroundColor(.gray)
                         Text(snipe.timestamp, style: .relative)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
 
                 Button("Logout") {
@@ -49,7 +40,9 @@ struct ProfileView: View {
                 .padding(.top, 8)
             }
             .navigationTitle("Profile")
-            .padding()
+            .onAppear {
+                viewModel.fetchTaggedSnipes()
+            }
         }
     }
 }

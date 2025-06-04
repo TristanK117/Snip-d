@@ -5,47 +5,51 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-import SwiftUI
-import FirebaseAuth
+import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
-import FirebaseStorage
+import FirebaseAuth
+import UIKit
 
 @MainActor
 class PostPreviewViewModel: ObservableObject {
     @Published var uploadStatus: String?
 
     func uploadSnipe(image: UIImage, group: Group, tagged: [User]) async {
-        guard let uid = Auth.auth().currentUser?.uid,
-              let email = Auth.auth().currentUser?.email else { return }
+        guard let email = Auth.auth().currentUser?.email else {
+            uploadStatus = "User not authenticated"
+            return
+        }
 
         do {
-            let url = try await uploadImageToStorage(image: image)
+            // Step 1: Upload image to Firebase Storage
+            let filename = UUID().uuidString
+            let imageURL = try await StorageService.shared.uploadImage(image, path: filename)
 
+            // Step 2: Create a Snipe object
             let snipe = Snipe(
-                photoURL: url.absoluteString,
+                id: nil,
+                photoURL: imageURL.absoluteString,
                 postedBy: email,
                 groupName: group.name,
                 timestamp: Date(),
                 taggedUsers: tagged.map { $0.email }
             )
 
-            try Firestore.firestore().collection("snipes").addDocument(from: snipe)
-            uploadStatus = "Success"
+            // Step 3: Save to Firestore
+            try FirebaseManager.shared.firestore
+                .collection("snipes")
+                .addDocument(from: snipe)
+
+            // Step 4: Send notifications to tagged users
+            await NotificationService.shared.sendBatchNotifications(
+                to: tagged.map { $0.email },
+                from: email,
+                groupName: group.name
+            )
+
+            uploadStatus = "Snipe posted successfully!"
         } catch {
-            uploadStatus = "Upload failed: \(error.localizedDescription)"
+            uploadStatus = "Failed to post snipe: \(error.localizedDescription)"
         }
-    }
-
-    private func uploadImageToStorage(image: UIImage) async throws -> URL {
-        let ref = Storage.storage().reference().child("snipes/\(UUID().uuidString).jpg")
-
-        guard let data = image.jpegData(compressionQuality: 0.8) else {
-            throw NSError(domain: "ImageConversion", code: 0, userInfo: nil)
-        }
-
-        _ = try await ref.putDataAsync(data, metadata: nil)
-        return try await ref.downloadURL()
     }
 }
-

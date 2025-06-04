@@ -7,32 +7,26 @@
 
 import SwiftUI
 
-struct NotificationItem: Identifiable {
-    let id = UUID()
-    let message: String
-    let timestamp: Date
-}
-
 struct NotificationsView: View {
-    // Mock notification data
-    let notifications = [
-        NotificationItem(message: "You were sniped by Jamie in Dorm 2B", timestamp: Date().addingTimeInterval(-3600)),
-        NotificationItem(message: "Nina tagged you in UW Friends", timestamp: Date().addingTimeInterval(-7200))
-    ]
+    @StateObject private var viewModel = NotificationsViewModel()
 
     var body: some View {
         NavigationView {
-            List(notifications) { notif in
-                VStack(alignment: .leading, spacing: 4) {
+            List(viewModel.notifications) { notif in
+                VStack(alignment: .leading) {
                     Text(notif.message)
                         .font(.body)
                     Text(notif.timestamp, style: .relative)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
             .navigationTitle("Notifications")
+            .onAppear {
+                viewModel.loadNotifications()
+            }
         }
     }
 }
+

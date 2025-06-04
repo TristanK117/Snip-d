@@ -9,14 +9,12 @@ import SwiftUI
 import PhotosUI
 
 struct CameraView: View {
-    @State private var selectedImage: UIImage?
-    @State private var showPostPreview = false
-    @State private var photoPickerItem: PhotosPickerItem?
+    @StateObject private var viewModel = CameraViewModel()
 
     var body: some View {
         VStack {
-            if let selectedImage = selectedImage {
-                Image(uiImage: selectedImage)
+            if let image = viewModel.selectedImage {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
                     .frame(height: 300)
@@ -25,29 +23,25 @@ struct CameraView: View {
                     .foregroundColor(.gray)
             }
 
-            PhotosPicker("Pick Photo", selection: $photoPickerItem, matching: .images)
-                .padding()
+            PhotosPicker("Pick Photo", selection: $viewModel.photoPickerItem, matching: .images)
+                .onChange(of: viewModel.photoPickerItem) { _ in
+                    Task {
+                        await viewModel.handlePhotoSelectionChange()
+                    }
+                }
 
-            if selectedImage != nil {
-                NavigationLink(destination: PostPreviewView(image: selectedImage!), isActive: $showPostPreview) {
+            if viewModel.selectedImage != nil {
+                NavigationLink(destination: PostPreviewView(image: viewModel.selectedImage!), isActive: $viewModel.isShowingPostPreview) {
                     EmptyView()
                 }
 
                 Button("Next") {
-                    showPostPreview = true
+                    viewModel.isShowingPostPreview = true
                 }
                 .buttonStyle(.borderedProminent)
             }
         }
         .padding()
-        .onChange(of: photoPickerItem) { newItem in
-            Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    selectedImage = image
-                }
-            }
-        }
     }
 }
 

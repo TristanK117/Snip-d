@@ -12,24 +12,15 @@ import FirebaseFirestoreSwift
 
 @MainActor
 class ProfileViewModel: ObservableObject {
-    @Published var userEmail: String?
+    @Published var userEmail: String? = Auth.auth().currentUser?.email
     @Published var taggedSnipes: [Snipe] = []
     @Published var errorMessage: String?
 
-    init() {
-        loadUserInfo()
-        fetchTaggedSnipes()
-    }
-
-    func loadUserInfo() {
-        userEmail = Auth.auth().currentUser?.email
-    }
-
     func fetchTaggedSnipes() {
-        guard let userEmail = Auth.auth().currentUser?.email else { return }
+        guard let email = userEmail else { return }
 
         Firestore.firestore().collection("snipes")
-            .whereField("taggedUsers", arrayContains: userEmail)
+            .whereField("taggedUsers", arrayContains: email)
             .order(by: "timestamp", descending: true)
             .getDocuments { snapshot, error in
                 DispatchQueue.main.async {
@@ -43,5 +34,13 @@ class ProfileViewModel: ObservableObject {
                     } ?? []
                 }
             }
+    }
+
+    func logout() {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Logout failed: \(error.localizedDescription)")
+        }
     }
 }

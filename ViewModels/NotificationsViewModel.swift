@@ -4,6 +4,7 @@
 //
 //  Created by Tristan Khieu on 6/3/25.
 //
+
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
@@ -16,7 +17,10 @@ class NotificationsViewModel: ObservableObject {
     func loadNotifications() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
-        Firestore.firestore().collection("users").document(uid).collection("notifications")
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .collection("notifications")
             .order(by: "timestamp", descending: true)
             .getDocuments { snapshot, error in
                 DispatchQueue.main.async {
@@ -29,4 +33,5 @@ class NotificationsViewModel: ObservableObject {
             }
     }
 }
+
 
