@@ -5,25 +5,22 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
 struct AuthService {
-    
     static func registerUser(email: String, password: String, name: String) async throws {
-        let result = try await Auth.auth().createUser(withEmail: email, password: password)
-        let user = result.user
+        let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+        let uid = authResult.user.uid
 
-        let snipUser = SnipUser(
-            id: user.uid,
-            uid: user.uid,
-            name: name,
-            email: user.email ?? "",
-            avatarURL: nil
-        )
+        let userData: [String: Any] = [
+            "uid": uid,
+            "name": name,
+            "email": email,
+            "avatarURL": "" // Placeholder or default avatar
+        ]
 
-        try await Firestore.firestore().collection("users").document(user.uid).setData(from: snipUser)
+        try await Firestore.firestore().collection("users").document(uid).setData(userData)
     }
 
     static func loginUser(email: String, password: String) async throws {

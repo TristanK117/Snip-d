@@ -9,13 +9,27 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var authViewModel = AuthViewModel()
+    @State private var showingRegister = false
 
     var body: some View {
         Group {
             if authViewModel.isLoggedIn {
                 MainTabView(authViewModel: authViewModel)
             } else {
-                LoginView()
+                NavigationStack {
+                    VStack {
+                        LoginView(authViewModel: authViewModel)
+
+                        Button("Don't have an account? Register here") {
+                            showingRegister = true
+                        }
+                        .padding(.top, 12)
+                        .navigationDestination(isPresented: $showingRegister) {
+                            RegisterView()
+                        }
+                    }
+                    .padding()
+                }
             }
         }
         .onAppear {

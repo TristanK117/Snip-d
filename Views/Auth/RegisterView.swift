@@ -13,9 +13,11 @@ struct RegisterView: View {
     @State private var password = ""
     @State private var isRegistered = false
 
+    @StateObject private var authViewModel = AuthViewModel()
+
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 16) {
                 TextField("Name", text: $name)
                     .textFieldStyle(.roundedBorder)
 
@@ -25,15 +27,22 @@ struct RegisterView: View {
                 SecureField("Password", text: $password)
                     .textFieldStyle(.roundedBorder)
 
+                if let error = authViewModel.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                }
+
                 Button("Register") {
-                    // Add actual register logic here
-                    isRegistered = true
+                    Task {
+                        await authViewModel.register(email: email, password: password, name: name)
+                        isRegistered = authViewModel.isLoggedIn
+                    }
                 }
                 .buttonStyle(.borderedProminent)
             }
             .padding()
             .navigationDestination(isPresented: $isRegistered) {
-                MainTabView(authViewModel: AuthViewModel())
+                MainTabView(authViewModel: authViewModel)
             }
         }
     }

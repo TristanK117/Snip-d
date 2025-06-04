@@ -8,30 +8,29 @@
 import SwiftUI
 
 struct LoginView: View {
+    @ObservedObject var authViewModel: AuthViewModel
     @State private var email = ""
     @State private var password = ""
-    @State private var isLoggedIn = false
 
     var body: some View {
-        NavigationStack {
-            VStack {
-                TextField("Email", text: $email)
-                    .autocapitalization(.none)
-                    .textFieldStyle(.roundedBorder)
+        VStack(spacing: 16) {
+            TextField("Email", text: $email)
+                .textFieldStyle(.roundedBorder)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
+            SecureField("Password", text: $password)
+                .textFieldStyle(.roundedBorder)
 
-                Button("Login") {
-                    // Add actual login logic here
-                    isLoggedIn = true
+            if let error = authViewModel.errorMessage {
+                Text(error)
+                    .foregroundColor(.red)
+            }
+
+            Button("Login") {
+                Task {
+                    await authViewModel.login(email: email, password: password)
                 }
-                .buttonStyle(.borderedProminent)
             }
-            .padding()
-            .navigationDestination(isPresented: $isLoggedIn) {
-                MainTabView(authViewModel: AuthViewModel())
-            }
+            .buttonStyle(.borderedProminent)
         }
     }
 }
