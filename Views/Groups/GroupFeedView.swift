@@ -9,20 +9,35 @@ import SwiftUI
 
 struct GroupFeedView: View {
     let group: SnipGroup
+    @StateObject private var viewModel = FeedViewModel()
 
     var body: some View {
-        VStack {
-            Text("Snipes for \(group.name)")
-                .font(.title)
-                .padding()
+        List(viewModel.snipes) { snipe in
+            VStack(alignment: .leading) {
+                AsyncImage(url: URL(string: snipe.imageURL)) { phase in
+                    if let image = phase.image {
+                        image.resizable()
+                             .scaledToFill()
+                             .frame(height: 200)
+                             .clipped()
+                    } else if phase.error != nil {
+                        Text("Error loading image")
+                    } else {
+                        ProgressView()
+                    }
+                }
 
-            Spacer()
-
-            Text("This is where snipes for this group will be displayed.")
-                .foregroundColor(.gray)
-
-            Spacer()
+                Text("📸 \(snipe.postedBy)").font(.subheadline)
+                Text("Group: \(snipe.groupName)").font(.footnote).foregroundColor(.secondary)
+                Text(snipe.timestamp, style: .relative).font(.caption).foregroundColor(.gray)
+            }
+            .padding(.vertical, 8)
         }
         .navigationTitle(group.name)
+        .onAppear {
+            Task {
+                await viewModel.loadSnipes(groupId: group.id ?? "")
+            }
+        }
     }
 }

@@ -11,37 +11,62 @@ import PhotosUI
 struct CameraView: View {
     @StateObject private var viewModel = CameraViewModel()
 
+    // Inject or select these values from elsewhere in your app
+    @State private var selectedGroup: SnipGroup? = nil
+    @State private var taggedUsers: [SnipUser] = []
+
     var body: some View {
-        VStack {
-            if let image = viewModel.selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 300)
-            } else {
-                Text("No image selected")
-                    .foregroundColor(.gray)
-            }
+        NavigationView {
+            VStack(spacing: 20) {
+                PhotosPicker(
+                    selection: $viewModel.photoPickerItem,
+                    matching: .images,
+                    photoLibrary: .shared()) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(style: StrokeStyle(lineWidth: 2, dash: [10]))
+                                .frame(height: 200)
 
-            PhotosPicker("Pick Photo", selection: $viewModel.photoPickerItem, matching: .images)
-                .onChange(of: viewModel.photoPickerItem) { _ in
-                    Task {
-                        await viewModel.handlePhotoSelectionChange()
+                            if let image = viewModel.selectedImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(height: 200)
+                                    .clipped()
+                                    .cornerRadius(12)
+                            } else {
+                                VStack {
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 40))
+                                    Text("Select a Photo")
+                                }
+                                .foregroundColor(.gray)
+                            }
+                        }
                     }
-                }
 
-            if viewModel.selectedImage != nil {
-                NavigationLink(destination: PostPreviewView(image: viewModel.selectedImage!), isActive: $viewModel.isShowingPostPreview) {
-                    EmptyView()
+                if viewModel.selectedImage != nil {
+                    Button("Next") {
+                        viewModel.isShowingPostPreview = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top)
                 }
-
-                Button("Next") {
-                    viewModel.isShowingPostPreview = true
+            }
+            .padding()
+            .navigationTitle("Camera")
+            .onChange(of: viewModel.photoPickerItem) { oldValue, newValue in
+                Task {
+                    await viewModel.handlePhotoSelectionChange()
                 }
-                .buttonStyle(.borderedProminent)
+            }
+            .sheet(isPresented: $viewModel.isShowingPostPreview) {
+                SheetContentWrapper(
+                    viewModel: viewModel,
+                    group: selectedGroup,
+                    taggedUsers: taggedUsers
+                )
             }
         }
-        .padding()
     }
 }
-

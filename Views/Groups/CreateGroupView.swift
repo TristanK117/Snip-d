@@ -6,65 +6,37 @@
 //
 
 import SwiftUI
-import FirebaseFirestore
-import FirebaseAuth
 
 struct CreateGroupView: View {
+    @ObservedObject var viewModel: GroupsViewModel
     @Environment(\.dismiss) var dismiss
+
     @State private var groupName = ""
-    @State private var errorMessage: String?
+    @State private var isCreating = false
 
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Group Name")) {
-                    TextField("Enter group name", text: $groupName)
+                    TextField("Enter name", text: $groupName)
                 }
 
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                }
-
-                Button("Create Group") {
-                    Task {
-                        await createGroup()
+                Section {
+                    Button("Create Group") {
+                        guard !groupName.isEmpty else { return }
+                        isCreating = true
+                        Task {
+                            await viewModel.createGroup(name: groupName)
+                            dismiss()
+                        }
                     }
+                    .disabled(isCreating || groupName.isEmpty)
                 }
             }
             .navigationTitle("New Group")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-
-    private func createGroup() async {
-        guard !groupName.trimmingCharacters(in: .whitespaces).isEmpty else {
-            errorMessage = "Group name cannot be empty."
-            return
-        }
-
-        guard let uid = Auth.auth().currentUser?.uid else {
-            errorMessage = "User not signed in."
-            return
-        }
-
-        let groupData: [String: Any] = [
-            "name": groupName,
-            "memberIds": [uid]
-        ]
-
-        do {
-            try await Firestore.firestore().collection("groups").addDocument(data: groupData)
-            dismiss()
-        } catch {
-            errorMessage = "Failed to create group: \(error.localizedDescription)"
+            .navigationBarItems(leading: Button("Cancel") {
+                dismiss()
+            })
         }
     }
 }
-

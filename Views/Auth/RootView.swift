@@ -11,13 +11,15 @@ struct RootView: View {
     @StateObject private var authViewModel = AuthViewModel()
 
     var body: some View {
-        NavigationView {
-            if authViewModel.isAuthenticated {
+        Group {
+            if authViewModel.isLoggedIn {
                 MainTabView(authViewModel: authViewModel)
             } else {
                 LoginView()
-                    .environmentObject(authViewModel)
             }
+        }
+        .onAppear {
+            authViewModel.fetchCurrentUser()
         }
     }
 }

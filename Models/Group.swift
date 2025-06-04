@@ -11,5 +11,7 @@ import FirebaseFirestore
 struct SnipGroup: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var name: String
-    var memberIds: [String]
+    var members: [String] // list of emails
+    var createdBy: String
+    var timestamp: Date
 }

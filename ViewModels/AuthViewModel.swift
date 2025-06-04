@@ -10,22 +10,25 @@ import FirebaseAuth
 
 @MainActor
 class AuthViewModel: ObservableObject {
-    @Published var isAuthenticated = false
+    @Published var isLoggedIn: Bool = false
     @Published var errorMessage: String?
+    @Published var currentUser: User?
 
-    func login(email: String, password: String) async {
+    func register(email: String, password: String, name: String) async {
         do {
-            let _ = try await Auth.auth().signIn(withEmail: email, password: password)
-            isAuthenticated = true
+            try await AuthService.registerUser(email: email, password: password, name: name)
+            currentUser = Auth.auth().currentUser
+            isLoggedIn = true
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    func register(email: String, password: String) async {
+    func login(email: String, password: String) async {
         do {
-            let _ = try await Auth.auth().createUser(withEmail: email, password: password)
-            isAuthenticated = true
+            try await AuthService.loginUser(email: email, password: password)
+            currentUser = Auth.auth().currentUser
+            isLoggedIn = true
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -33,10 +36,16 @@ class AuthViewModel: ObservableObject {
 
     func logout() {
         do {
-            try Auth.auth().signOut()
-            isAuthenticated = false
+            try AuthService.logoutUser()
+            isLoggedIn = false
+            currentUser = nil
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func fetchCurrentUser() {
+        currentUser = AuthService.getCurrentUser()
+        isLoggedIn = (currentUser != nil)
     }
 }

@@ -10,6 +10,8 @@ import FirebaseFirestore
 
 struct NotificationItem: Identifiable, Codable {
     @DocumentID var id: String?
-    var message: String
+    var toEmail: String
+    var fromEmail: String
+    var groupName: String
     var timestamp: Date
 }

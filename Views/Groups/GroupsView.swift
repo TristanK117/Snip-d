@@ -15,7 +15,6 @@ struct GroupsView: View {
             VStack {
                 if viewModel.isLoading {
                     ProgressView("Loading Groups...")
-                        .progressViewStyle(CircularProgressViewStyle())
                         .padding()
                 } else if viewModel.groups.isEmpty {
                     Text("No groups yet. Create or join one!")
@@ -24,11 +23,16 @@ struct GroupsView: View {
                 } else {
                     List(viewModel.groups, id: \.id) { group in
                         NavigationLink(destination: GroupFeedView(group: group)) {
-                            Text(group.name)
-                                .font(.headline)
+                            VStack(alignment: .leading) {
+                                Text(group.name)
+                                    .font(.headline)
+                                Text("\(group.members.count) member(s)")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
                         }
                     }
-                    .listStyle(PlainListStyle())
+                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Groups")
@@ -42,7 +46,7 @@ struct GroupsView: View {
                 }
             }
             .sheet(isPresented: $viewModel.showingGroupCreation) {
-                CreateGroupView()
+                CreateGroupView(viewModel: viewModel)
             }
             .onAppear {
                 Task {

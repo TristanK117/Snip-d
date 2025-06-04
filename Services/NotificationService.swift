@@ -5,42 +5,53 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
+import Foundation
 import FirebaseFirestore
 
-final class NotificationService {
+class NotificationService {
     static let shared = NotificationService()
-    private let db = FirebaseManager.shared.firestore
-
     private init() {}
 
-    func sendSnipeNotification(to userEmail: String, from sender: String, groupName: String) async {
-        do {
-            // Get UID for tagged user
-            let snapshot = try await db.collection("users")
-                .whereField("email", isEqualTo: userEmail)
-                .getDocuments()
+    private let notificationsCollection = FirebaseManager.shared.firestore.collection("notifications")
 
-            guard let doc = snapshot.documents.first,
-                  let userId = doc.documentID as String? else { return }
+    func sendNotification(to toEmail: String, from fromEmail: String, groupName: String) async throws {
+        let doc = notificationsCollection.document()
+        
+        let notificationData: [String: Any] = [
+            "id": doc.documentID,
+            "toEmail": toEmail,
+            "fromEmail": fromEmail,
+            "groupName": groupName,
+            "timestamp": Timestamp(date: Date())
+        ]
 
-            let notif = NotificationItem(
-                id: nil,
-                message: "\(sender) sniped you in \(groupName)!",
-                timestamp: Date()
-            )
+        try await doc.setData(notificationData)
+    }
 
-            try db.collection("users")
-                .document(userId)
-                .collection("notifications")
-                .addDocument(from: notif)
-        } catch {
-            print("Failed to send notification: \(error)")
+    func sendBatchNotifications(to taggedEmails: [String], from senderEmail: String, groupName: String) async {
+        for email in taggedEmails where email != senderEmail {
+            do {
+                try await sendNotification(to: email, from: senderEmail, groupName: groupName)
+            } catch {
+                print("Failed to send notification to \(email): \(error)")
+            }
         }
     }
 
-    func sendBatchNotifications(to emails: [String], from sender: String, groupName: String) async {
-        for email in emails {
-            await sendSnipeNotification(to: email, from: sender, groupName: groupName)
+    func fetchNotifications(for email: String) async throws -> [NotificationItem] {
+        let snapshot = try await notificationsCollection
+            .whereField("toEmail", isEqualTo: email)
+            .order(by: "timestamp", descending: true)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { doc in
+            do {
+                let data = try JSONSerialization.data(withJSONObject: doc.data())
+                return try JSONDecoder().decode(NotificationItem.self, from: data)
+            } catch {
+                print("Failed to decode notification: \(error)")
+                return nil
+            }
         }
     }
 }

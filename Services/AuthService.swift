@@ -7,37 +7,34 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 
-final class AuthService {
-    static let shared = AuthService()
+struct AuthService {
+    
+    static func registerUser(email: String, password: String, name: String) async throws {
+        let result = try await Auth.auth().createUser(withEmail: email, password: password)
+        let user = result.user
 
-    private init() {}
+        let snipUser = SnipUser(
+            id: user.uid,
+            uid: user.uid,
+            name: name,
+            email: user.email ?? "",
+            avatarURL: nil
+        )
 
-    func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        Auth.auth().signIn(withEmail: email, password: password) { result, error in
-            if let error = error {
-                completion(.failure(error))
-            } else if let user = result?.user {
-                completion(.success(user))
-            }
-        }
+        try await Firestore.firestore().collection("users").document(user.uid).setData(from: snipUser)
     }
 
-    func signUp(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
-            if let error = error {
-                completion(.failure(error))
-            } else if let user = result?.user {
-                completion(.success(user))
-            }
-        }
+    static func loginUser(email: String, password: String) async throws {
+        _ = try await Auth.auth().signIn(withEmail: email, password: password)
     }
 
-    func signOut() throws {
+    static func logoutUser() throws {
         try Auth.auth().signOut()
     }
 
-    var currentUser: User? {
+    static func getCurrentUser() -> User? {
         return Auth.auth().currentUser
     }
 }

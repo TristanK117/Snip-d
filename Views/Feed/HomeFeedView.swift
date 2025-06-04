@@ -13,23 +13,41 @@ struct HomeFeedView: View {
     var body: some View {
         NavigationView {
             List(viewModel.snipes) { snipe in
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading) {
+                    AsyncImage(url: URL(string: snipe.imageURL)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 200)
+                                .clipped()
+                        } else if phase.error != nil {
+                            Text("Error loading image")
+                        } else {
+                            ProgressView()
+                        }
+                    }
+
                     Text("📸 \(snipe.postedBy)")
-                        .font(.headline)
-                    Text("Group: \(snipe.groupName)")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+
+                    Text("Group: \(snipe.groupName)")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+
                     Text(snipe.timestamp, style: .relative)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 .padding(.vertical, 8)
             }
-            .navigationTitle("Your Feed")
+            .listStyle(.plain)
+            .navigationTitle("Recent Snipes")
             .onAppear {
-                viewModel.loadSnipes()
+                Task {
+                    await viewModel.loadAllUserSnipes()
+                }
             }
         }
     }
 }
-

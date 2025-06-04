@@ -11,11 +11,12 @@ import FirebaseFirestore
 
 struct Snipe: Identifiable, Codable {
     @DocumentID var id: String?
-    var photoURL: String
+    var imageURL: String
     var postedBy: String
+    var tagged: [String]
+    var groupId: String
     var groupName: String
     var timestamp: Date
-    var taggedUsers: [String]
 }
 
 

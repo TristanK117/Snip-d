@@ -5,20 +5,22 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
-import FirebaseCore
-import FirebaseAuth
+import Foundation
+import Foundation
+import Firebase
 import FirebaseFirestore
+import FirebaseAuth
 import FirebaseStorage
 
-final class FirebaseManager {
+class FirebaseManager {
     static let shared = FirebaseManager()
-
+    
     let auth: Auth
     let firestore: Firestore
     let storage: Storage
 
     private init() {
-        FirebaseApp.configure()
+        FirebaseApp.configure()  // Optional if already configured in AppDelegate
         self.auth = Auth.auth()
         self.firestore = Firestore.firestore()
         self.storage = Storage.storage()

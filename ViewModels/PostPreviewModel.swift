@@ -5,51 +5,55 @@
 //  Created by Tristan Khieu on 6/3/25.
 //
 
+
 import Foundation
+import SwiftUI
+import FirebaseStorage
 import FirebaseFirestore
 import FirebaseAuth
-import UIKit
 
 @MainActor
 class PostPreviewViewModel: ObservableObject {
     @Published var uploadStatus: String?
 
     func uploadSnipe(image: UIImage, group: SnipGroup, tagged: [SnipUser]) async {
-        guard let email = Auth.auth().currentUser?.email else {
-            uploadStatus = "User not authenticated"
+        guard let imageData = image.jpegData(compressionQuality: 0.8),
+              let currentUser = Auth.auth().currentUser,
+              let email = currentUser.email,
+              let groupId = group.id else {
+            uploadStatus = "Invalid image, user, or group info."
             return
         }
 
+        let snipeId = UUID().uuidString
+        let storageRef = Storage.storage().reference().child("snipes/\(snipeId).jpg")
+
         do {
-            // Step 1: Upload image to Firebase Storage
-            let filename = UUID().uuidString
-            let imageURL = try await StorageService.shared.uploadImage(image, path: filename)
+            _ = try await storageRef.putDataAsync(imageData)
+            let downloadURL = try await storageRef.downloadURL()
 
-            // Step 2: Create a Snipe object
-            let snipe = Snipe(
-                id: nil,
-                photoURL: imageURL.absoluteString,
-                postedBy: email,
-                groupName: group.name,
-                timestamp: Date(),
-                taggedUsers: tagged.map { $0.email }
-            )
+            let snipeData: [String: Any] = [
+                "id": snipeId,
+                "imageURL": downloadURL.absoluteString,
+                "tagged": tagged.map { $0.email },
+                "postedBy": email,
+                "groupId": groupId,
+                "groupName": group.name,
+                "timestamp": Timestamp()
+            ]
 
-            // Step 3: Save to Firestore
-            try FirebaseManager.shared.firestore
-                .collection("snipes")
-                .addDocument(from: snipe)
+            try await Firestore.firestore().collection("snipes").document(snipeId).setData(snipeData)
 
-            // Step 4: Send notifications to tagged users
-            await NotificationService.shared.sendBatchNotifications(
+            // Send notifications
+            try await NotificationService.shared.sendBatchNotifications(
                 to: tagged.map { $0.email },
                 from: email,
                 groupName: group.name
             )
 
-            uploadStatus = "Snipe posted successfully!"
+            uploadStatus = "Post uploaded successfully."
         } catch {
-            uploadStatus = "Failed to post snipe: \(error.localizedDescription)"
+            uploadStatus = "Upload failed: \(error.localizedDescription)"
         }
     }
 }

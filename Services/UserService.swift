@@ -8,30 +8,50 @@
 import Foundation
 import FirebaseFirestore
 
-final class UserService {
+class UserService {
     static let shared = UserService()
-    private let db = Firestore.firestore()
-
     private init() {}
 
-    func fetchUsersInGroup(group: SnipGroup, completion: @escaping (Result<[SnipUser], Error>) -> Void) {
-        guard !group.memberIds.isEmpty else {
-            completion(.success([]))
-            return
-        }
+    private let db = Firestore.firestore()
 
+    func fetchAllUsers() async throws -> [SnipUser] {
+        let snapshot = try await db.collection("users").getDocuments()
+        return try snapshot.documents.compactMap { doc in
+            try doc.data(as: SnipUser.self)
+        }
+    }
+
+    func fetchUser(byEmail email: String) async throws -> SnipUser? {
+        let snapshot = try await db.collection("users")
+            .whereField("email", isEqualTo: email)
+            .getDocuments()
+
+        return try snapshot.documents.first?.data(as: SnipUser.self)
+    }
+
+    func fetchUsersInGroup(group: SnipGroup, completion: @escaping (Result<[SnipUser], Error>) -> Void) {
+        let emails = group.members
         db.collection("users")
-            .whereField("uid", in: group.memberIds)
+            .whereField("email", in: emails)
             .getDocuments { snapshot, error in
                 if let error = error {
                     completion(.failure(error))
-                } else {
-                    let users = snapshot?.documents.compactMap {
-                        try? $0.data(as: SnipUser.self)
-                    } ?? []
+                    return
+                }
+                guard let docs = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                do {
+                    let users = try docs.map { try $0.data(as: SnipUser.self) }
                     completion(.success(users))
+                } catch {
+                    completion(.failure(error))
                 }
             }
     }
-}
 
+    func createUser(_ user: SnipUser) async throws {
+        try db.collection("users").document(user.uid).setData(from: user)
+    }
+}

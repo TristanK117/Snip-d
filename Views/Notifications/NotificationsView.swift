@@ -12,21 +12,25 @@ struct NotificationsView: View {
 
     var body: some View {
         NavigationView {
-            List(viewModel.notifications) { notif in
-                VStack(alignment: .leading) {
-                    Text(notif.message)
-                        .font(.body)
-                    Text(notif.timestamp, style: .relative)
+            List(viewModel.notifications) { notification in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("🔔 Tagged by \(notification.fromEmail)")
+                        .font(.headline)
+                    Text("Group: \(notification.groupName)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(notification.timestamp, style: .relative)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 .padding(.vertical, 6)
             }
-            .navigationTitle("Notifications")
+            .navigationTitle("Alerts")
             .onAppear {
-                viewModel.loadNotifications()
+                Task {
+                    await viewModel.loadNotifications()
+                }
             }
         }
     }
 }
-

@@ -6,38 +6,34 @@
 //
 
 import SwiftUI
-import FirebaseAuth
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 12) {
+            VStack {
                 if let email = viewModel.userEmail {
                     Text("📧 \(email)")
                         .font(.title3)
+                        .padding(.top)
                 }
 
                 List(viewModel.taggedSnipes) { snipe in
                     VStack(alignment: .leading) {
                         Text("📸 \(snipe.postedBy)")
-                            .font(.headline)
                         Text("Group: \(snipe.groupName)")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
                         Text(snipe.timestamp, style: .relative)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
                     }
-                    .padding(.vertical, 6)
                 }
 
                 Button("Logout") {
                     viewModel.logout()
                 }
                 .buttonStyle(.borderedProminent)
-                .padding(.top, 8)
+                .padding()
             }
             .navigationTitle("Profile")
             .onAppear {
