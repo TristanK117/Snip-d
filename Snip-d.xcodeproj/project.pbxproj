@@ -45,6 +45,36 @@
 			path = "Snip-dUITests";
 			sourceTree = "<group>";
 		};
+		26C5239A2DF001BA009FA746 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		26C523AB2DF0024D009FA746 /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		26C523CD2DF0030D009FA746 /* ViewModels */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		26C523E62DF00399009FA746 /* Services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Services;
+			sourceTree = "<group>";
+		};
+		26C524382DF00426009FA746 /* Utils */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		26C524452DF0047E009FA746 /* Resources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +105,12 @@
 		26C523502DEFFE58009FA746 = {
 			isa = PBXGroup;
 			children = (
+				26C524452DF0047E009FA746 /* Resources */,
+				26C524382DF00426009FA746 /* Utils */,
+				26C523E62DF00399009FA746 /* Services */,
+				26C523CD2DF0030D009FA746 /* ViewModels */,
+				26C523AB2DF0024D009FA746 /* Views */,
+				26C5239A2DF001BA009FA746 /* Models */,
 				26C5235B2DEFFE58009FA746 /* Snip-d */,
 				26C523692DEFFE5A009FA746 /* Snip-dTests */,
 				26C523732DEFFE5A009FA746 /* Snip-dUITests */,
@@ -109,6 +145,12 @@
 			);
 			fileSystemSynchronizedGroups = (
 				26C5235B2DEFFE58009FA746 /* Snip-d */,
+				26C5239A2DF001BA009FA746 /* Models */,
+				26C523AB2DF0024D009FA746 /* Views */,
+				26C523CD2DF0030D009FA746 /* ViewModels */,
+				26C523E62DF00399009FA746 /* Services */,
+				26C524382DF00426009FA746 /* Utils */,
+				26C524452DF0047E009FA746 /* Resources */,
 			);
 			name = "Snip-d";
 			packageProductDependencies = (
