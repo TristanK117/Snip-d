@@ -22,7 +22,7 @@ class NotificationService {
             "toEmail": toEmail,
             "fromEmail": fromEmail,
             "groupName": groupName,
-            "timestamp": Timestamp(date: Date())
+            "timestamp": Date() // Fixed: Use Date instead of Timestamp
         ]
 
         try await doc.setData(notificationData)
@@ -44,14 +44,9 @@ class NotificationService {
             .order(by: "timestamp", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc in
-            do {
-                let data = try JSONSerialization.data(withJSONObject: doc.data())
-                return try JSONDecoder().decode(NotificationItem.self, from: data)
-            } catch {
-                print("Failed to decode notification: \(error)")
-                return nil
-            }
+        // Fixed: Use Firestore's built-in decoding instead of JSONSerialization
+        return try snapshot.documents.compactMap { doc in
+            try doc.data(as: NotificationItem.self)
         }
     }
 }

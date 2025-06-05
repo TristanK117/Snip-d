@@ -40,7 +40,7 @@ class PostPreviewViewModel: ObservableObject {
                 "postedBy": email,
                 "groupId": groupId,
                 "groupName": group.name,
-                "timestamp": Timestamp()
+                "timestamp": Date()
             ]
 
             try await Firestore.firestore().collection("snipes").document(snipeId).setData(snipeData)

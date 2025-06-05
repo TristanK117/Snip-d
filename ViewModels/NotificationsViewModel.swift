@@ -13,24 +13,13 @@ import FirebaseFirestore
 class NotificationsViewModel: ObservableObject {
     @Published var notifications: [NotificationItem] = []
 
-    func loadNotifications() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        Firestore.firestore()
-            .collection("users")
-            .document(uid)
-            .collection("notifications")
-            .order(by: "timestamp", descending: true)
-            .getDocuments { snapshot, error in
-                DispatchQueue.main.async {
-                    if let snapshot = snapshot {
-                        self.notifications = snapshot.documents.compactMap {
-                            try? $0.data(as: NotificationItem.self)
-                        }
-                    }
-                }
-            }
+    func loadNotifications() async {
+        guard let email = Auth.auth().currentUser?.email else { return }
+        
+        do {
+            notifications = try await NotificationService.shared.fetchNotifications(for: email)
+        } catch {
+            print("Failed to load notifications: \(error)")
+        }
     }
 }
-
-
