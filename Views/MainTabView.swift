@@ -27,7 +27,7 @@ struct MainTabView: View {
                     Label("Camera", systemImage: "camera.fill")
                 }
 
-            ProfileView()
+            ProfileView(authViewModel: authViewModel)
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle.fill")
                 }

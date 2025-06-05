@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject var authViewModel: AuthViewModel 
 
     var body: some View {
         NavigationView {
@@ -30,7 +31,7 @@ struct ProfileView: View {
                 }
 
                 Button("Logout") {
-                    viewModel.logout()
+                    authViewModel.logout()
                 }
                 .buttonStyle(.borderedProminent)
                 .padding()

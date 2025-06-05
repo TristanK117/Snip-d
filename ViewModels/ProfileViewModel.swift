@@ -26,12 +26,4 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
-
-    func logout() {
-        do {
-            try Auth.auth().signOut()
-        } catch {
-            print("Logout failed: \(error)")
-        }
-    }
 }
