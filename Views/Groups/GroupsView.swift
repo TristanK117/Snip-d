@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GroupsView: View {
     @StateObject private var viewModel = GroupsViewModel()
+    @State private var selectedGroupForAddingMembers: SnipGroup?
 
     var body: some View {
         NavigationView {
@@ -17,18 +18,40 @@ struct GroupsView: View {
                     ProgressView("Loading Groups...")
                         .padding()
                 } else if viewModel.groups.isEmpty {
-                    Text("No groups yet. Create or join one!")
-                        .foregroundColor(.gray)
-                        .padding()
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.3")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                        Text("No groups yet")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("Create or join a group to start sharing!")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Create Your First Group") {
+                            viewModel.showingGroupCreation = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
                 } else {
                     List(viewModel.groups, id: \.id) { group in
                         NavigationLink(destination: GroupFeedView(group: group)) {
-                            VStack(alignment: .leading) {
-                                Text(group.name)
-                                    .font(.headline)
-                                Text("\(group.members.count) member(s)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                            GroupRowView(group: group)
+                        }
+                        .contextMenu {
+                            Button(action: {
+                                selectedGroupForAddingMembers = group
+                            }) {
+                                Label("Add Members", systemImage: "person.badge.plus")
+                            }
+                            
+                            Button(action: {
+                                // TODO: Group settings
+                            }) {
+                                Label("Group Settings", systemImage: "gear")
                             }
                         }
                     }
@@ -48,11 +71,56 @@ struct GroupsView: View {
             .sheet(isPresented: $viewModel.showingGroupCreation) {
                 CreateGroupView(viewModel: viewModel)
             }
+            .sheet(item: $selectedGroupForAddingMembers) { group in
+                AddMembersView(group: group, groupsViewModel: viewModel)
+            }
             .onAppear {
                 Task {
                     await viewModel.fetchGroups()
                 }
             }
         }
+    }
+}
+
+
+struct GroupRowView: View {
+    let group: SnipGroup
+    
+    var body: some View {
+        HStack(spacing: 12) {
+
+            Circle()
+                .fill(Color.blue.opacity(0.2))
+                .frame(width: 50, height: 50)
+                .overlay(
+                    Text(group.name.prefix(1).uppercased())
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                )
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "person.2")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text("\(group.members.count) member\(group.members.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .padding(.vertical, 4)
     }
 }

@@ -74,7 +74,7 @@ struct CameraView: View {
                         
                         // User Tagging
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Tag Users")
+                            Text("Tag People (Optional)")
                                 .font(.headline)
                             
                             if !taggedUsers.isEmpty {
@@ -100,17 +100,24 @@ struct CameraView: View {
                                 }
                             }
                             
-                            Button(action: { isShowingUserPicker = true }) {
-                                HStack {
-                                    Image(systemName: "person.badge.plus")
-                                    Text("Add People")
+                            if selectedGroup != nil && availableUsers.isEmpty {
+                                Text("No other members in this group to tag")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal)
+                            } else {
+                                Button(action: { isShowingUserPicker = true }) {
+                                    HStack {
+                                        Image(systemName: "person.badge.plus")
+                                        Text("Add People")
+                                    }
+                                    .foregroundColor(selectedGroup == nil ? .gray : .blue)
+                                    .padding()
+                                    .background((selectedGroup == nil ? Color.gray : Color.blue).opacity(0.1))
+                                    .cornerRadius(8)
                                 }
-                                .foregroundColor(.blue)
-                                .padding()
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(8)
+                                .disabled(selectedGroup == nil || availableUsers.isEmpty)
                             }
-                            .disabled(selectedGroup == nil)
                         }
                         
                         // Upload Button
@@ -172,22 +179,36 @@ struct CameraView: View {
     private func loadGroups() async {
         do {
             availableGroups = try await GroupService.shared.fetchGroupsForCurrentUser()
+            print("DEBUG: Loaded \(availableGroups.count) groups")
         } catch {
             print("Failed to load groups: \(error)")
         }
     }
     
     private func loadUsersForSelectedGroup() async {
-        guard let group = selectedGroup else { return }
+        guard let group = selectedGroup else {
+            print("DEBUG: No group selected")
+            availableUsers = []
+            return
+        }
+        
+        print("DEBUG: Loading users for group: \(group.name) with \(group.members.count) members")
         
         do {
-            availableUsers = try await withCheckedThrowingContinuation { continuation in
+            let allUsers = try await withCheckedThrowingContinuation { continuation in
                 UserService.shared.fetchUsersInGroup(group: group) { result in
                     continuation.resume(with: result)
                 }
             }
+            
+            // Filter out the current user since you don't tag yourself
+            let currentUserEmail = viewModel.getCurrentUserEmail()
+            availableUsers = allUsers.filter { $0.email != currentUserEmail }
+            
+            print("DEBUG: Loaded \(allUsers.count) total users, \(availableUsers.count) available for tagging (excluding current user)")
         } catch {
             print("Failed to load users for group: \(error)")
+            availableUsers = []
         }
     }
     
@@ -197,13 +218,20 @@ struct CameraView: View {
     
     private func uploadSnipe() async {
         guard let image = viewModel.selectedImage,
-              let group = selectedGroup else { return }
+              let group = selectedGroup else {
+            print("DEBUG: Missing image or group")
+            return
+        }
+        
+        print("DEBUG: Starting upload for group: \(group.name)")
+        print("DEBUG: Tagged users count: \(taggedUsers.count)")
         
         isLoading = true
         
         do {
             // Upload image to Firebase Storage
             let imageURL = try await StorageService.uploadImage(image)
+            print("DEBUG: Image uploaded successfully")
             
             // Get current user email
             guard let currentUserEmail = viewModel.getCurrentUserEmail() else {
@@ -211,8 +239,9 @@ struct CameraView: View {
                              userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
             }
             
-            // Create array of tagged user emails
+            // Create array of tagged user emails (can be empty)
             let taggedEmails = taggedUsers.map { $0.email }
+            print("DEBUG: Tagged emails: \(taggedEmails)")
             
             // Upload snipe data to Firestore
             try await SnipeService.uploadSnipe(
@@ -222,13 +251,17 @@ struct CameraView: View {
                 groupId: group.id,
                 groupName: group.name
             )
+            print("DEBUG: Snipe data uploaded successfully")
             
-            // Send notifications to tagged users
-            await NotificationService.shared.sendBatchNotifications(
-                to: taggedEmails,
-                from: currentUserEmail,
-                groupName: group.name
-            )
+            // Send notifications to tagged users (only if there are any)
+            if !taggedEmails.isEmpty {
+                await NotificationService.shared.sendBatchNotifications(
+                    to: taggedEmails,
+                    from: currentUserEmail,
+                    groupName: group.name
+                )
+                print("DEBUG: Notifications sent")
+            }
             
             // Reset form
             viewModel.selectedImage = nil
@@ -236,10 +269,10 @@ struct CameraView: View {
             selectedGroup = nil
             taggedUsers.removeAll()
             
-            print("Snipe uploaded successfully!")
+            print("DEBUG: Snipe uploaded successfully!")
             
         } catch {
-            print("Failed to upload snipe: \(error)")
+            print("DEBUG: Failed to upload snipe: \(error)")
             // TODO: Show error alert to user
         }
         
@@ -298,32 +331,68 @@ struct UserPickerView: View {
     
     var body: some View {
         NavigationView {
-            List(users, id: \.uid) { user in
-                Button(action: {
-                    if taggedUsers.contains(where: { $0.uid == user.uid }) {
-                        taggedUsers.removeAll { $0.uid == user.uid }
-                    } else {
-                        taggedUsers.append(user)
+            Group {
+                if users.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.3")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                        Text("No members to tag")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("Debug: \(users.count) users loaded")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                        Text("This might mean:")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Text("• You're the only member")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("• Users failed to load")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("• Permission issues")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
-                }) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(user.name)
-                                .font(.headline)
-                            Text(user.email)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        Spacer()
-                        if taggedUsers.contains(where: { $0.uid == user.uid }) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
-                        } else {
-                            Image(systemName: "circle")
-                                .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    VStack {
+                        Text("Found \(users.count) member(s) to tag")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                            .padding(.top)
+                        
+                        List(users, id: \.uid) { user in
+                            Button(action: {
+                                if taggedUsers.contains(where: { $0.uid == user.uid }) {
+                                    taggedUsers.removeAll { $0.uid == user.uid }
+                                } else {
+                                    taggedUsers.append(user)
+                                }
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(user.name)
+                                            .font(.headline)
+                                        Text(user.email)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    Spacer()
+                                    if taggedUsers.contains(where: { $0.uid == user.uid }) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.gray)
+                                    }
+                                }
+                                .foregroundColor(.primary)
+                            }
                         }
                     }
-                    .foregroundColor(.primary)
                 }
             }
             .navigationTitle("Tag People")
@@ -334,6 +403,12 @@ struct UserPickerView: View {
                         isPresented = false
                     }
                 }
+            }
+        }
+        .onAppear {
+            print("DEBUG: UserPickerView appeared with \(users.count) users")
+            for user in users {
+                print("DEBUG: User - \(user.name) (\(user.email))")
             }
         }
     }

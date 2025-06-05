@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct SnipGroup: Codable, Equatable {
+struct SnipGroup: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let members: [String]

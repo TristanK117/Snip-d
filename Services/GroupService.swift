@@ -26,9 +26,8 @@ struct GroupService {
     
     private static let groupsCollection = FirebaseManager.shared.firestore.collection("groups")
 
-    // Create a new group
     static func createGroup(name: String, creatorEmail: String) async throws {
-        let doc = groupsCollection.document()  // Auto-generated ID
+        let doc = groupsCollection.document()
 
         let groupData: [String: Any] = [
             "id": doc.documentID,
@@ -41,17 +40,17 @@ struct GroupService {
         try await doc.setData(groupData)
     }
 
-    // Fetch all groups the current user is a member of
+
     static func fetchGroups(for email: String) async throws -> [SnipGroup] {
         let snapshot = try await groupsCollection.whereField("members", arrayContains: email).getDocuments()
 
-        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+
         return try snapshot.documents.compactMap { doc in
             try doc.data(as: SnipGroup.self)
         }
     }
 
-    // Join an existing group by ID
+
     static func joinGroup(groupId: String, userEmail: String) async throws {
         let docRef = groupsCollection.document(groupId)
         try await docRef.updateData([
@@ -59,11 +58,24 @@ struct GroupService {
         ])
     }
 
-    // Fetch a single group
+    static func addMembers(to groupId: String, emails: [String]) async throws {
+        let docRef = groupsCollection.document(groupId)
+        try await docRef.updateData([
+            "members": FieldValue.arrayUnion(emails)
+        ])
+    }
+
+    static func removeMember(from groupId: String, email: String) async throws {
+        let docRef = groupsCollection.document(groupId)
+        try await docRef.updateData([
+            "members": FieldValue.arrayRemove([email])
+        ])
+    }
+
     static func fetchGroup(byId id: String) async throws -> SnipGroup {
         let doc = try await groupsCollection.document(id).getDocument()
         
-        // FIXED: Use Firestore's built-in decoding instead of JSONSerialization
+
         return try doc.data(as: SnipGroup.self)
     }
 }

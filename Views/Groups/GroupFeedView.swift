@@ -10,6 +10,9 @@ import SwiftUI
 struct GroupFeedView: View {
     let group: SnipGroup
     @StateObject private var viewModel = FeedViewModel()
+    @StateObject private var groupsViewModel = GroupsViewModel()
+    @State private var showingAddMembers = false
+    @State private var showingGroupInfo = false
 
     var body: some View {
         List(viewModel.snipes) { snipe in
@@ -34,10 +37,33 @@ struct GroupFeedView: View {
             .padding(.vertical, 8)
         }
         .navigationTitle(group.name)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Menu {
+                    Button(action: { showingAddMembers = true }) {
+                        Label("Add Members", systemImage: "person.badge.plus")
+                    }
+                    
+                    Button(action: { showingGroupInfo = true }) {
+                        Label("Group Info", systemImage: "info.circle")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title2)
+                }
+            }
+        }
         .onAppear {
             Task {
-                await viewModel.loadSnipes(groupId: group.id ?? "")
+                await viewModel.loadSnipes(groupId: group.id)
             }
+        }
+        .sheet(isPresented: $showingAddMembers) {
+            AddMembersView(group: group, groupsViewModel: groupsViewModel)
+        }
+        .sheet(isPresented: $showingGroupInfo) {
+            GroupInfoView(group: group, groupsViewModel: groupsViewModel)
         }
     }
 }
